@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine
 import flask
+from flask import request
+from flask_cors import CORS
  
 # DEFINE THE DATABASE CREDENTIALS
 USER = 'sa'
@@ -29,20 +31,74 @@ class PrefixMiddleware(object):
             return ["This url does not belong to the app.".encode()]
 
 app = flask.Flask(__name__)
+cors = CORS(app, resources={r"*": {"origins": "http://localhost:4200"}})
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/api')
 
 def get_engine():
     return create_engine(url=f"mssql+pyodbc://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}?driver={DRIVER}&{TRUST}")
 
-@app.route('/')
-def home():
-    try:
-        engine = get_engine()
-        connection = engine.connect()
-        connection.close()
-        return 'db connection success'
-    except:
-        return 'connection failed'
+@app.route('/pool/user/<string:id>', methods=['GET'])
+def get_pool_by_user_id(id):
+    """
+    Queries for pools associated with the given user ID
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/pool/device/<string:id>', methods=['GET'])
+def get_pool_by_device_id(id):
+    """
+    Queries for pools associated with the given device ID
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/pool/<string:id>', methods=['GET'])
+def get_pool_by_id(id):
+    """
+    Queries for a pool with the given device ID
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/pool/create', methods=['POST'])
+def create_pool():
+    """
+    Creates a new pool, based on the specifications supplied in the request body
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/pool/transaction', methods=['POST'])
+def create_transaction():
+    """
+    Creates a new transaction record
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/profile/login', methods=['POST'])
+def login_profile():
+    """
+    Authenticates and logs in a user profile
+    """
+    return {
+        "response": "stub"
+    }
+
+@app.route('/profile/create', methods=['POST'])
+def create_profile():
+    """
+    Creates a new user profile
+    """
+    return {
+        "response": "stub"
+    }
     
 if __name__ == '__main__':
     app.run(port=8000)
