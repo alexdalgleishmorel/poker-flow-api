@@ -119,7 +119,9 @@ def signup():
         "secret", 
         algorithm="HS256"
     )
-    return encoded_jwt
+    return {
+        "jwt": encoded_jwt
+    }
     
 if __name__ == '__main__':
     app.run(port=8000)
