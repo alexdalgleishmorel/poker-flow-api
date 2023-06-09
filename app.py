@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 import flask
 from flask import request
 from flask_cors import CORS
+import jwt
  
 # DEFINE THE DATABASE CREDENTIALS
 USER = 'sa'
@@ -82,23 +83,43 @@ def create_transaction():
         "response": "stub"
     }
 
-@app.route('/profile/login', methods=['POST'])
-def login_profile():
-    """
-    Authenticates and logs in a user profile
-    """
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    encoded_jwt = jwt.encode(
+        {
+            "profile": {
+                "id": "stub_user_id",
+                "email": f"{data['email']}",
+                "firstName": "stub_first_name",
+                "lastName": "stub_last_name",
+            },
+            "jwt": "mock_jwt_token_from_api"
+        }, 
+        "secret", 
+        algorithm="HS256"
+    )
     return {
-        "response": "stub"
+        "jwt": encoded_jwt
     }
 
-@app.route('/profile/create', methods=['POST'])
-def create_profile():
-    """
-    Creates a new user profile
-    """
-    return {
-        "response": "stub"
-    }
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    encoded_jwt = jwt.encode(
+        {
+            "profile": {
+                "id": "stub_user_id",
+                "email": f"{data['email']}",
+                "firstName": f"{data['firstName']}",
+                "lastName": f"{data['lastName']}",
+            },
+            "jwt": "mock_jwt_token_from_api"
+        }, 
+        "secret", 
+        algorithm="HS256"
+    )
+    return encoded_jwt
     
 if __name__ == '__main__':
     app.run(port=8000)
