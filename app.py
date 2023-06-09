@@ -15,6 +15,75 @@ DATABASE = 'pokerflowDB'
 DRIVER = 'ODBC+Driver+18+for+SQL+Server'
 TRUST = 'TrustServerCertificate=yes'
 
+MOCK_POOL_DATA = {
+  'name': 'mock_pool_name',
+  'date_created': '01/01/2023 15:21 MDT',
+  'id': 'mock_id',
+  'device_id': 'mock_device_id',
+  'total': 123.45,
+  'contributors': [
+    {
+      'profile': {
+        'email': 'alex@local.com',
+        'firstName': 'Alex',
+        'lastName': 'Dalgleish-Morel'
+      },
+      'contribution': 83.45
+    },
+    {
+      'profile': {
+        'email': 'landan@local.com',
+        'firstName': 'Landan',
+        'lastName': 'Butt'
+      },
+      'contribution': 20.55
+    },
+    {
+      'profile': {
+        'email': 'kian@local.com',
+        'firstName': 'Kian',
+        'lastName': 'Reilly'
+      },
+      'contribution': 20.45
+    }
+  ],
+  'transactions': [
+    {
+      'id': 'mock_transaction_id',
+      'profile': {
+        'email': 'alex@local.com',
+        'firstName': 'Alex',
+        'lastName': 'Dalgleish-Morel'
+      },
+      'date': '01/01/2023 15:21 MDT',
+      'type': 'BUY-IN',
+      'amount': 50.51
+    },
+    {
+      'id': 'mock_transaction_id',
+      'profile': {
+        'email': 'alex@local.com',
+        'firstName': 'Alex',
+        'lastName': 'Dalgleish-Morel'
+      },
+      'date': '01/01/2023 16:21 MDT',
+      'type': 'CASH-OUT',
+      'amount': 40.44
+    }
+  ],
+  'admin': {
+    'email': 'alex@local.com',
+    'firstName': 'Alex',
+    'lastName': 'Dalgleish-Morel'
+  },
+  'settings': {
+    'hasPassword': False,
+    'minBuyIn': 5,
+    'maxBuyIn': 100,
+    'denominations': []
+  }
+}
+
 class PrefixMiddleware(object):
 
     def __init__(self, app, prefix=''):
@@ -39,40 +108,32 @@ def get_engine():
     return create_engine(url=f"mssql+pyodbc://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}?driver={DRIVER}&{TRUST}")
 
 @app.route('/pool/user/<string:id>', methods=['GET'])
-def get_pool_by_user_id(id):
+def get_pools_by_user_id(id):
     """
     Queries for pools associated with the given user ID
     """
-    return {
-        "response": "stub"
-    }
+    return [MOCK_POOL_DATA]
 
 @app.route('/pool/device/<string:id>', methods=['GET'])
-def get_pool_by_device_id(id):
+def get_pools_by_device_id(id):
     """
     Queries for pools associated with the given device ID
     """
-    return {
-        "response": "stub"
-    }
+    return [MOCK_POOL_DATA]
 
 @app.route('/pool/<string:id>', methods=['GET'])
 def get_pool_by_id(id):
     """
     Queries for a pool with the given device ID
     """
-    return {
-        "response": "stub"
-    }
+    return MOCK_POOL_DATA
 
 @app.route('/pool/create', methods=['POST'])
 def create_pool():
     """
     Creates a new pool, based on the specifications supplied in the request body
     """
-    return {
-        "response": "stub"
-    }
+    return MOCK_POOL_DATA
 
 @app.route('/pool/transaction', methods=['POST'])
 def create_transaction():
