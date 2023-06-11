@@ -5,7 +5,7 @@ from flask_cors import CORS
 import auth
 import pool
 import user
-from user import EmailAlreadyExistsException
+from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException
 
 class PrefixMiddleware(object):
 
@@ -27,12 +27,14 @@ app = flask.Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "http://localhost:4200"}})
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/api')
 
+
 @app.route('/pool/user/<string:id>', methods=['GET'])
 def get_pools_by_user_id(id):
     """
     Queries for pools associated with the given user ID
     """
     return pool.get_by_user_id(id)
+
 
 @app.route('/pool/device/<string:id>', methods=['GET'])
 def get_pools_by_device_id(id):
@@ -41,12 +43,14 @@ def get_pools_by_device_id(id):
     """
     return pool.get_by_device_id(id)
 
+
 @app.route('/pool/<string:id>', methods=['GET'])
 def get_pool_by_id(id):
     """
     Queries for a pool with the given pool ID
     """
     return pool.get_by_id(id)
+
 
 @app.route('/pool/create', methods=['POST'])
 def create_pool():
@@ -55,6 +59,7 @@ def create_pool():
     """
     return pool.create(request.get_json())
 
+
 @app.route('/pool/transaction', methods=['POST'])
 def create_transaction():
     """
@@ -62,13 +67,21 @@ def create_transaction():
     """
     return pool.create_transaction(request.get_json())
 
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    
-    return {
-        "jwt": auth.generate_jwt(data)
+    try:
+      profile_data = user.login(data)
+      return {
+      "jwt": auth.generate_jwt(profile_data)
     }
+
+    except EmailNotFoundException:
+        return "EmailNotFound: No profile with the given email could be found", 404
+    except InvalidPasswordException:
+        return "Invalid Credentials: The supplied username and password are invalid", 401
+
 
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -78,7 +91,7 @@ def signup():
       return "", 201
 
     except EmailAlreadyExistsException:
-      return "EmailAlreadyExistsException: A profile with the given email already exists within the database", 400
+      return "EmailAlreadyExists: A profile with the given email already exists within the database", 400
     
 if __name__ == '__main__':
     app.run(port=8000)

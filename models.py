@@ -27,10 +27,6 @@ class Profile(Base):
     firstName:str = Column(String(255), nullable=False)
     lastName:str = Column(String(255), nullable=False)
     hash = Column(Text, nullable=False)
-    salt = Column(Text, nullable=False)
-
-    def __repr__(self):
-        return f"<Profile {self.id}>"
 
 @dataclass
 class PoolSettings(Base):
@@ -42,7 +38,6 @@ class PoolSettings(Base):
     max_buy_in = Column(Float, nullable=False)
     denominations = Column(String(255), nullable=False)
     has_password = Column(Boolean, nullable=False)
-    salt = Column(Text, nullable=False)
     hash = Column(Text, nullable=False)
 
     def __repr__(self):
