@@ -13,6 +13,9 @@ class EmailNotFoundException(Exception):
 class InvalidPasswordException(Exception):
     pass
 
+class UserNotFoundException(Exception):
+    pass
+
 def create(data):
 
     session = database.get_session()
@@ -64,3 +67,16 @@ def login(data):
 
     finally:
         session.close()
+
+def get_user_first_last(id, session):
+    query = select(Profile).filter_by(id=id)
+    rows = session.execute(query).fetchone()
+    if not rows:
+        raise UserNotFoundException
+    
+    profile = rows[0]
+
+    return {
+        "firstName": profile.firstName,
+        "lastName": profile.lastName
+    }

@@ -4,6 +4,7 @@ from flask_cors import CORS
 
 import auth
 import pool
+from pool import PoolNotFoundException
 import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException
 
@@ -33,7 +34,11 @@ def get_pools_by_user_id(id):
     """
     Queries for pools associated with the given user ID
     """
-    return pool.get_by_user_id(id)
+    try:
+        pools = pool.get_by_user_id(id)
+        return jsonify(pools)
+    except PoolNotFoundException:
+        return "PoolNotFound: No pools found relating to the specified user ID", 404
 
 
 @app.route('/pool/device/<string:id>', methods=['GET'])
@@ -41,7 +46,11 @@ def get_pools_by_device_id(id):
     """
     Queries for pools associated with the given device ID
     """
-    return pool.get_by_device_id(id)
+    try:
+        pools = pool.get_by_device_id(id)
+        return jsonify(pools)
+    except PoolNotFoundException:
+        return "PoolNotFound: No pools found relating to the specified device ID", 404
 
 
 @app.route('/pool/<string:id>', methods=['GET'])
@@ -49,7 +58,11 @@ def get_pool_by_id(id):
     """
     Queries for a pool with the given pool ID
     """
-    return pool.get_by_id(id)
+    try:
+        pool_data = pool.get_by_id(id)
+        return jsonify(pool_data)
+    except PoolNotFoundException:
+        return "PoolNotFound: No pool found with the specified ID", 404
 
 
 @app.route('/pool/create', methods=['POST'])
@@ -57,15 +70,17 @@ def create_pool():
     """
     Creates a new pool, based on the specifications supplied in the request body
     """
-    return pool.create(request.get_json())
+    pool.create(request.get_json())
+    return "", 201
 
 
-@app.route('/pool/transaction', methods=['POST'])
+@app.route('/pool/transaction/create', methods=['POST'])
 def create_transaction():
     """
     Creates a new transaction record
     """
-    return pool.create_transaction(request.get_json())
+    pool.create_transaction(request.get_json())
+    return "", 201
 
 
 @app.route('/login', methods=['POST'])
