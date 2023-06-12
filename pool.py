@@ -110,7 +110,7 @@ def create(specs):
 
         session.commit()
 
-        return pool.id
+        return get_by_id(pool.id)
 
     finally:
         session.close()
@@ -166,29 +166,33 @@ def get_pool_data(id, session):
     pool_id = pool.id
     available_pot = pool.available_pot
     device_id = pool.device_id
-    pool_admin = pool.admin_id
-    pool_contributors = {}
-    pool_transactions = {}
+    pool_admin = get_user_first_last(pool.admin_id, session)
+    pool_contributors_dict = {}
+    pool_contributors = []
+    pool_transactions = []
 
     query = select(Transaction).filter_by(pool_id=pool_id)
     rows = session.execute(query).all()
 
     for transaction in rows:
         transaction = transaction[0]
-        if not transaction.profile_id in pool_contributors:
-            pool_contributors[transaction.profile_id] = {
+        if not transaction.profile_id in pool_contributors_dict:
+            pool_contributors_dict[transaction.profile_id] = {
                 "profile": get_user_first_last(transaction.profile_id, session),
-                "amount": transaction.amount if transaction.type == TransactionTypes.BUY_IN else 0
+                "contribution": transaction.amount if transaction.type == TransactionTypes.BUY_IN else 0
             }
         else:
-            pool_contributors[transaction.profile_id]['amount'] += transaction.amount if transaction.type == TransactionTypes.BUY_IN else 0
+            pool_contributors_dict[transaction.profile_id]['contribution'] += transaction.amount if transaction.type == TransactionTypes.BUY_IN else 0
 
-        pool_transactions[transaction.id] = {
+        pool_transactions.append({
             "profile": get_user_first_last(transaction.profile_id, session),
             "date": transaction.date,
             "type": transaction.type,
             "amount": transaction.amount
-        }
+        })
+
+    for contributor in pool_contributors_dict:
+        pool_contributors.append(pool_contributors_dict[contributor])
     
     pool_settings = get_settings_data(pool.settings_id, session)
 

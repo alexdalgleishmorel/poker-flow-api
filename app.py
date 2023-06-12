@@ -70,8 +70,8 @@ def create_pool():
     """
     Creates a new pool, based on the specifications supplied in the request body
     """
-    pool.create(request.get_json())
-    return "", 201
+    created_pool = pool.create(request.get_json())
+    return created_pool, 201
 
 
 @app.route('/pool/transaction/create', methods=['POST'])

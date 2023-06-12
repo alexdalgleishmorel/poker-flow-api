@@ -77,6 +77,7 @@ def get_user_first_last(id, session):
     profile = rows[0]
 
     return {
+        "id": id,
         "firstName": profile.firstName,
         "lastName": profile.lastName
     }
