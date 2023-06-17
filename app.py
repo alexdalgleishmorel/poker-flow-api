@@ -106,7 +106,7 @@ def signup():
       return "", 201
 
     except EmailAlreadyExistsException:
-      return "EmailAlreadyExists: A profile with the given email already exists within the database", 400
+      return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
     
 if __name__ == '__main__':
     app.run(port=8000)
