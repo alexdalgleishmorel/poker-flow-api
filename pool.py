@@ -11,6 +11,9 @@ class PoolNotFoundException(Exception):
 class PoolSettingsNotFoundException(Exception):
     pass
 
+class InvalidPasswordException(Exception):
+    pass
+
 def get_by_user_id(id):
     """
     Queries for pools associated with the given user ID
@@ -111,6 +114,35 @@ def create(specs):
         session.commit()
 
         return get_by_id(pool.id)
+
+    finally:
+        session.close()
+
+def join(data):
+    """
+    Adds a new member to a pool
+    """
+    session = database.get_session()
+
+    try:
+        pool = get_by_id(data['pool_id'])
+        
+        query = select(PoolSettings).filter_by(id=pool['settings']['id'])
+        rows = session.execute(query).fetchone()
+        if not rows:
+            raise PoolSettingsNotFoundException
+        
+        settings = rows[0]
+        password = data['password'] if settings.has_password else ''
+
+        # Verify the provided password
+        if not bcrypt.checkpw(password.encode('utf-8'), settings.hash.encode('utf-8')):
+            raise InvalidPasswordException
+
+        # Add the user as a member
+        add_pool_member(data['profile_id'], data['pool_id'], session)
+
+        session.commit()
 
     finally:
         session.close()
@@ -217,6 +249,7 @@ def get_settings_data(id, session):
     settings = rows[0]
 
     return {
+        "id": settings.id,
         "min_buy_in": settings.min_buy_in,
         "max_buy_in": settings.max_buy_in,
         "denominations": [float(x) for x in settings.denominations.split(',')],
