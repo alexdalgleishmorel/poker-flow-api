@@ -83,7 +83,7 @@ def create(specs):
         poolSettings = PoolSettings(
             min_buy_in = specs['settings']['min_buy_in'],
             max_buy_in = specs['settings']['max_buy_in'],
-            denominations = specs['settings']['denominations'],
+            denominations = ','.join(str(x) for x in specs['settings']['denominations']),
             has_password = specs['settings']['has_password'],
             hash = bcrypt.hashpw(specs['settings']['password'].encode('utf-8'), bcrypt.gensalt(rounds=12))
         )
@@ -219,7 +219,7 @@ def get_settings_data(id, session):
     return {
         "min_buy_in": settings.min_buy_in,
         "max_buy_in": settings.max_buy_in,
-        "denominations": settings.denominations,
+        "denominations": [float(x) for x in settings.denominations.split(',')],
         "has_password": settings.has_password
     }
 
