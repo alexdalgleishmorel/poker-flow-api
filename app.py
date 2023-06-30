@@ -73,6 +73,14 @@ def create_pool():
     created_pool = pool.create(request.get_json())
     return created_pool, 201
 
+@app.route('/pool/settings/update', methods=['POST'])
+def update_pool_settings():
+    """
+    Update a pool attribute
+    """
+    updated_pool = pool.update_settings(request.get_json())
+    return updated_pool, 200
+
 @app.route('/pool/join', methods=['POST'])
 def join_pool():
     """

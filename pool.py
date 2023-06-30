@@ -280,7 +280,7 @@ def get_pool_data(id, session):
         'contributors': pool_contributors,
         'transactions': pool_transactions,
         'admin': pool_admin,
-        'settings': pool_settings
+        'settings': pool_settings,
     }
 
 def get_settings_data(id, session):
@@ -296,7 +296,10 @@ def get_settings_data(id, session):
         "min_buy_in": settings.min_buy_in,
         "max_buy_in": settings.max_buy_in,
         "denominations": [float(x) for x in settings.denominations.split(',')],
-        "has_password": settings.has_password
+        "has_password": settings.has_password,
+        'buy_in_enabled': settings.buy_in_enabled,
+        'buy_in_expiry_time': settings.buy_in_expiry_time,
+        'expired': settings.expired
     }
 
 def add_pool_member(id, pool_id, session):
@@ -309,3 +312,29 @@ def add_pool_member(id, pool_id, session):
         profile_id = id
     )
     session.add(poolmember)
+
+def update_settings(data):
+    session = database.get_session()
+
+    try:
+        for updateRequest in data['update_requests']:
+            # Gets the associated pool
+            query = select(Pool).filter_by(id=data['pool_id'])
+            rows = session.execute(query).fetchone()
+            if not rows:
+                raise PoolNotFoundException
+            pool = rows[0]
+
+            query = select(PoolSettings).filter_by(id=pool.settings_id)
+            rows = session.execute(query).fetchone()
+            if not rows:
+                raise PoolSettingsNotFoundException
+            settings = rows[0]
+
+            setattr(settings, updateRequest['attribute'], updateRequest['value'])
+            
+        session.commit()
+        return get_pool_data(pool.id, session)
+
+    finally:
+        session.close()

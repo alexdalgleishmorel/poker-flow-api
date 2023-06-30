@@ -63,6 +63,9 @@ class PoolSettings(Base):
     min_buy_in = Column(Float, nullable=False)
     max_buy_in = Column(Float, nullable=False)
     denominations = Column(String(255), nullable=False)
+    buy_in_enabled = Column(Boolean, nullable=False, default=True)
+    buy_in_expiry_time = Column(DateTime, nullable=True)
+    expired = Column(Boolean, nullable=False, default=False)
     has_password = Column(Boolean, nullable=False)
     hash = Column(Text, nullable=False)
 
