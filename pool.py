@@ -14,6 +14,9 @@ class PoolSettingsNotFoundException(Exception):
 class InvalidPasswordException(Exception):
     pass
 
+class InvalidTransactionException(Exception):
+    pass
+
 def get_by_user_id(id):
     """
     Queries for pools associated with the given user ID
@@ -151,34 +154,74 @@ def create_transaction(data):
     """
     Creates a new transaction record
     """
+    if data['type'] == TransactionTypes.BUY_IN:
+        return create_buy_in(data)
+    elif data['type'] == TransactionTypes.CASH_OUT:
+        return create_cash_out(data)
+    else:
+        raise InvalidTransactionException
+
+def create_buy_in(data):
     session = database.get_session()
 
     try:
+        # Gets the associated pool
+        query = select(Pool).filter_by(id=data['pool_id'])
+        rows = session.execute(query).fetchone()
+        if not rows:
+            raise PoolNotFoundException
+        pool = rows[0]
+
         # Creates the transaction
         transaction = Transaction(
             transaction_id = None,
-            pool_id = data['pool_id'],
+            pool_id = pool.id,
             profile_id = data['profile_id'],
-            type = data['type'],
+            type = TransactionTypes.BUY_IN,
             amount = data['amount'],
             status = TransactionStatus.PENDING
         )
         session.add(transaction)
         session.flush()
 
+        pool.available_pot += transaction.amount
+
+        session.commit()
+        return transaction.amount, transaction.type
+
+    finally:
+        session.close()
+
+def create_cash_out(data):
+    session = database.get_session()
+
+    try:
+        # Gets the associated pool
         query = select(Pool).filter_by(id=data['pool_id'])
         rows = session.execute(query).fetchone()
         if not rows:
             raise PoolNotFoundException
-        
-        if transaction.type == TransactionTypes.BUY_IN:
-            rows[0].available_pot += transaction.amount
-        else:
-            rows[0].available_pot -= transaction.amount
+        pool = rows[0]
+
+        # Adjusts transaction amount based on the available pot
+        transaction_amount = pool.available_pot if data['amount'] > pool.available_pot else data['amount']
+
+        # Creates the transaction
+        transaction = Transaction(
+            transaction_id = None,
+            pool_id = pool.id,
+            profile_id = data['profile_id'],
+            type = TransactionTypes.CASH_OUT,
+            amount = transaction_amount,
+            status = TransactionStatus.PENDING
+        )
+        session.add(transaction)
+        session.flush()
+
+        pool.available_pot -= transaction.amount
 
         session.commit()
-
-        return transaction.id
+        return transaction.amount, transaction.type
 
     finally:
         session.close()

@@ -4,7 +4,7 @@ from flask_cors import CORS
 
 import auth
 import pool
-from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolPasswordException
+from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolPasswordException, InvalidTransactionException
 import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException as InvalidUserPasswordException
 
@@ -91,8 +91,14 @@ def create_transaction():
     """
     Creates a new transaction record
     """
-    pool.create_transaction(request.get_json())
-    return "", 201
+    try:
+        amount, type = pool.create_transaction(request.get_json())
+        return {
+            'amount': amount,
+            'type': type
+        }, 201
+    except InvalidTransactionException:
+        return "Invalid Transaction Error: The provided transaction was invalid", 400
 
 
 @app.route('/login', methods=['POST'])
