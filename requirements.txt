@@ -1,0 +1,7 @@
+flask
+flask-cors
+SQLAlchemy
+boto3
+pyodbc
+bcrypt
+jwt
