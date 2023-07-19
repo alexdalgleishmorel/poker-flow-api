@@ -1,11 +1,21 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 import constants
 
-def get_engine():
-    return create_engine(url=f"mssql+pyodbc://{constants.USER}:{constants.PASSWORD}@{constants.HOST}:{constants.PORT}/{constants.DATABASE}?driver={constants.DRIVER}&{constants.TRUST}")
+class DatabaseConnector:
+    _engine = None
+    _session = None
 
-def get_session():
-    Session = sessionmaker(bind=get_engine())
-    return Session()
+    @classmethod
+    def get_engine(cls):
+        if cls._engine is None:
+            cls._engine = create_engine(url=f"mssql+pyodbc://{constants.USER}:{constants.PASSWORD}@{constants.HOST}:{constants.PORT}/{constants.DATABASE}?driver={constants.DRIVER}&{constants.TRUST}")
+        return cls._engine
+
+    @classmethod
+    def get_session(cls):
+        if cls._session is None:
+            Session = scoped_session(sessionmaker(bind=cls.get_engine()))
+            cls._session = Session()
+        return cls._session

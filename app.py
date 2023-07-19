@@ -1,8 +1,10 @@
 import flask
 from flask import request, jsonify
 from flask_cors import CORS
+from sqlalchemy.exc import SQLAlchemyError
 
 import auth
+import database
 import pool
 from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolPasswordException, InvalidTransactionException
 import user
@@ -28,66 +30,88 @@ app = flask.Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "http://localhost:4200"}})
 app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/api')
 
+def with_session(func):
+    def wrapper(*args, **kwargs):
+        session = database.DatabaseConnector.get_session()
+        try:
+            return func(session, *args, **kwargs)
+        except SQLAlchemyError as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+    # Assign a unique name to the wrapper function based on the original function name
+    wrapper.__name__ = func.__name__ + '_with_session'
+    return wrapper
 
 @app.route('/pool/user/<string:id>', methods=['GET'])
-def get_pools_by_user_id(id):
+@with_session
+def get_pools_by_user_id(session, id):
     """
     Queries for pools associated with the given user ID
     """
     try:
-        pools = pool.get_by_user_id(id)
+        pools = pool.get_by_user_id(session, id)
         return jsonify(pools)
     except PoolNotFoundException:
         return "PoolNotFound: No pools found relating to the specified user ID", 404
 
 
 @app.route('/pool/device/<string:id>', methods=['GET'])
-def get_pools_by_device_id(id):
+@with_session
+def get_pools_by_device_id(session, id):
     """
     Queries for pools associated with the given device ID
     """
     try:
-        pools = pool.get_by_device_id(id)
+        pools = pool.get_by_device_id(session, id)
         return jsonify(pools)
     except PoolNotFoundException:
         return "PoolNotFound: No pools found relating to the specified device ID", 404
 
 
 @app.route('/pool/<string:id>', methods=['GET'])
-def get_pool_by_id(id):
+@with_session
+def get_pool_by_id(session, id):
     """
     Queries for a pool with the given pool ID
     """
     try:
-      pool_data = pool.get_by_id(id)
+      pool_data = pool.get_by_id(session, id)
       return jsonify(pool_data)
     except PoolNotFoundException:
       return "PoolNotFound: No pool found with the specified ID", 404
 
 
 @app.route('/pool/create', methods=['POST'])
-def create_pool():
+@with_session
+def create_pool(session):
     """
     Creates a new pool, based on the specifications supplied in the request body
     """
-    created_pool = pool.create(request.get_json())
+    data = request.get_json()
+    created_pool = pool.create(session, data)
     return created_pool, 201
 
 @app.route('/pool/settings/update', methods=['POST'])
-def update_pool_settings():
+@with_session
+def update_pool_settings(session):
     """
     Update a pool attribute
     """
-    updated_pool = pool.update_settings(request.get_json())
+    data = request.get_json()
+    updated_pool = pool.update_settings(session, data)
     return updated_pool, 200
 
 @app.route('/pool/join', methods=['POST'])
-def join_pool():
+@with_session
+def join_pool(session):
     """
     Adds the specified user as a member of the given pool
     """
+    data = request.get_json()
     try:
-      pool.join(request.get_json())
+      pool.join(session, data)
       return "", 201
     
     except InvalidPoolPasswordException:
@@ -95,12 +119,14 @@ def join_pool():
         
 
 @app.route('/pool/transaction/create', methods=['POST'])
-def create_transaction():
+@with_session
+def create_transaction(session):
     """
     Creates a new transaction record
     """
+    data = request.get_json()
     try:
-        amount, type = pool.create_transaction(request.get_json())
+        amount, type = pool.create_transaction(session, data)
         return {
             'amount': amount,
             'type': type
@@ -110,10 +136,11 @@ def create_transaction():
 
 
 @app.route('/login', methods=['POST'])
-def login():
+@with_session
+def login(session):
     data = request.get_json()
     try:
-      profile_data = user.login(data)
+      profile_data = user.login(session, data)
       return {
       "jwt": auth.generate_jwt(profile_data)
     }
@@ -125,10 +152,11 @@ def login():
 
 
 @app.route('/signup', methods=['POST'])
-def signup():
+@with_session
+def signup(session):
     data = request.get_json()
     try:
-      user.create(data)
+      user.create(session, data)
       return "", 201
 
     except EmailAlreadyExistsException:
