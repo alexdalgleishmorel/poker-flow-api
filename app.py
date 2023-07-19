@@ -11,7 +11,7 @@ import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException as InvalidUserPasswordException
 
 app = flask.Flask(__name__)
-cors = CORS(app, resources={r"*": {"origins": "http://localhost:4200"}})
+cors = CORS(app)
 
 def with_session(func):
     def wrapper(*args, **kwargs):
