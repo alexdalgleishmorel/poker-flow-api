@@ -10,25 +10,8 @@ from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolP
 import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException as InvalidUserPasswordException
 
-class PrefixMiddleware(object):
-
-    def __init__(self, app, prefix=''):
-        self.app = app
-        self.prefix = prefix
-
-    def __call__(self, environ, start_response):
-
-        if environ['PATH_INFO'].startswith(self.prefix):
-            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
-            environ['SCRIPT_NAME'] = self.prefix
-            return self.app(environ, start_response)
-        else:
-            start_response('404', [('Content-Type', 'text/plain')])
-            return ["This url does not belong to the app.".encode()]
-
 app = flask.Flask(__name__)
 cors = CORS(app, resources={r"*": {"origins": "http://localhost:4200"}})
-app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/api')
 
 def with_session(func):
     def wrapper(*args, **kwargs):
