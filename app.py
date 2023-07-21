@@ -27,7 +27,7 @@ def with_session(func):
     wrapper.__name__ = func.__name__ + '_with_session'
     return wrapper
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 def health_check():
     """
     Pings back a 200 response for health monitoring
