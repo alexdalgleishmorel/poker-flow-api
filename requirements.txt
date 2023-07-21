@@ -4,4 +4,4 @@ SQLAlchemy
 boto3
 pyodbc
 bcrypt
-jwt
+PyJWT
