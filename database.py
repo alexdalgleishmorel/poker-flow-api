@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker, threadlocal
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 import constants
 
@@ -16,6 +16,6 @@ class DatabaseConnector:
     @classmethod
     def get_session(cls):
         if cls._session is None:
-            Session = scoped_session(sessionmaker(bind=cls.get_engine()), scopefunc=threadlocal)
+            Session = scoped_session(sessionmaker(bind=cls.get_engine()))
             cls._session = Session()
         return cls._session
