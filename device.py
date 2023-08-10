@@ -3,7 +3,7 @@ from models import Device
 
 
 def create():
-    session = database.DatabaseConnector.get_session()
+    session = database.get_session()
 
     try:
         # Create the new device

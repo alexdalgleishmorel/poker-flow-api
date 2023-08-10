@@ -15,7 +15,7 @@ cors = CORS(app)
 
 def with_session(func):
     def wrapper(*args, **kwargs):
-        session = database.DatabaseConnector.get_session()
+        session = database.get_session()
         try:
             return func(session, *args, **kwargs)
         except SQLAlchemyError as e:
