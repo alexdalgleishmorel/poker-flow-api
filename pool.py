@@ -94,13 +94,13 @@ def create(session, specs):
 
     session.commit()
 
-    return get_by_id(pool.id)
+    return get_by_id(session, pool.id)
 
 def join(session, data):
     """
     Adds a new member to a pool
     """
-    pool = get_by_id(data['pool_id'])
+    pool = get_by_id(session, data['pool_id'])
     
     query = select(PoolSettings).filter_by(id=pool['settings']['id'])
     rows = session.execute(query).fetchone()
