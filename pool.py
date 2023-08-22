@@ -1,5 +1,5 @@
 import bcrypt
-from sqlalchemy import select
+from sqlalchemy import select, desc
 
 from models import Pool, PoolMember, PoolSettings, Transaction, TransactionTypes, TransactionStatus
 from user import get_user_first_last
@@ -16,14 +16,21 @@ class InvalidPasswordException(Exception):
 class InvalidTransactionException(Exception):
     pass
 
-def get_by_user_id(session, id):
+def get_by_user_id(session, id, itemOffset, per_page):
     """
     Queries for pools associated with the given user ID
     """
     pools = []
 
-    query = select(PoolMember).filter_by(profile_id=id)
-    rows = session.execute(query).all()
+    query = (
+        select(PoolMember)
+            .join(Pool, Pool.id == PoolMember.pool_id)
+            .filter(PoolMember.profile_id == id)
+            .order_by(desc(Pool.last_modified))
+            .limit(per_page)
+            .offset(itemOffset)
+        )
+    rows = session.execute(query)
     if not rows:
         raise PoolNotFoundException
     
@@ -32,14 +39,15 @@ def get_by_user_id(session, id):
 
     return pools
 
-def get_by_device_id(session, id):
+def get_by_device_id(session, id, itemOffset, per_page):
     """
     Queries for pools associated with the given device ID
     """
     pools = []
 
-    query = select(Pool).filter_by(device_id=id)
-    rows = session.execute(query).all()
+    query = select(Pool).filter_by(device_id=id).order_by(desc(Pool.last_modified))
+    paginatedQuery = query.limit(per_page).offset(itemOffset)
+    rows = session.execute(paginatedQuery)
     if not rows:
         raise PoolNotFoundException
     
@@ -150,6 +158,7 @@ def create_buy_in(session, data):
     session.add(transaction)
     session.flush()
 
+    pool.total_pot += transaction.amount
     pool.available_pot += transaction.amount
 
     session.commit()
@@ -228,12 +237,21 @@ def get_pool_data(id, session):
     
     pool_settings = get_settings_data(pool.settings_id, session)
 
+    query = select(PoolMember).filter_by(pool_id=pool_id)
+    rows = session.execute(query).all()
+
+    members = []
+    for member in rows:
+        member = member[0]
+        members.append(member.profile_id)
+
     return {
         'name': pool_name,
         'date_created': date_pool_created,
         'id': pool_id,
         'device_id': device_id,
         'available_pot': available_pot,
+        'member_ids': members,
         'contributors': pool_contributors,
         'transactions': pool_transactions,
         'admin': pool_admin,

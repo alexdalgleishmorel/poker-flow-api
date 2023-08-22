@@ -44,11 +44,13 @@ class Pool(Base):
     __tablename__ = "pool"
 
     id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
-    device_id = Column(Integer, ForeignKey("device.id"), nullable=False)
+    device_id = Column(Integer, ForeignKey("device.id"), nullable=True)
     pool_name = Column(String(255), nullable=False)
     date_created = Column(DateTime, nullable=False, server_default=func.now())
+    last_modified = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     settings_id = Column(Integer, ForeignKey("poolsettings.id"), nullable=False)
     admin_id = Column(Integer, ForeignKey("profile.id"), nullable=False)
+    total_pot = Column(Float, nullable=False, default=0)
     available_pot = Column(Float, nullable=False, default=0)
 
     def __repr__(self):
