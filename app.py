@@ -52,24 +52,6 @@ def get_pools_by_user_id(session, id):
         return "PoolNotFound: No pools found relating to the specified user ID", 404
 
 
-@app.route('/pool/device/<string:id>', methods=['GET'])
-@with_session
-def get_pools_by_device_id(session, id):
-    """
-    Queries for pools associated with the given device ID
-    """
-    try:
-        pools = pool.get_by_device_id(
-            session, 
-            id,
-            itemOffset=request.args.get('itemOffset', type=int), 
-            per_page=request.args.get('itemsPerPage', type=int)
-        )
-        return jsonify(pools)
-    except PoolNotFoundException:
-        return "PoolNotFound: No pools found relating to the specified device ID", 404
-
-
 @app.route('/pool/<string:id>', methods=['GET'])
 @with_session
 def get_pool_by_id(session, id):
@@ -169,4 +151,4 @@ def signup(session):
       return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
     
 if __name__ == '__main__':
-    app.run(host='10.0.0.138', port=8000)
+    app.run(host='127.0.0.1', port=8000)

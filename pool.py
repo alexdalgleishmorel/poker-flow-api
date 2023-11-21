@@ -1,7 +1,7 @@
 import bcrypt
 from sqlalchemy import select, desc
 
-from models import Pool, PoolMember, PoolSettings, Transaction, TransactionTypes, TransactionStatus
+from models import Pool, PoolMember, PoolSettings, Transaction, TransactionTypes
 from user import get_user_first_last
 
 class PoolNotFoundException(Exception):
@@ -39,23 +39,6 @@ def get_by_user_id(session, id, itemOffset, per_page):
 
     return pools
 
-def get_by_device_id(session, id, itemOffset, per_page):
-    """
-    Queries for pools associated with the given device ID
-    """
-    pools = []
-
-    query = select(Pool).filter_by(device_id=id).order_by(desc(Pool.last_modified))
-    paginatedQuery = query.limit(per_page).offset(itemOffset)
-    rows = session.execute(paginatedQuery)
-    if not rows:
-        raise PoolNotFoundException
-    
-    for row in rows:
-        pools.append(get_pool_data(row[0].id, session))
-
-    return pools
-
 def get_by_id(session, id):
     """
     Queries for a pool with the given pool ID
@@ -76,15 +59,12 @@ def create(session, specs):
         min_buy_in = specs['settings']['min_buy_in'],
         max_buy_in = specs['settings']['max_buy_in'],
         denominations = ','.join(str(x) for x in specs['settings']['denominations']),
-        has_password = specs['settings']['has_password'],
-        hash = bcrypt.hashpw(specs['settings']['password'].encode('utf-8'), bcrypt.gensalt(rounds=12))
     )
     session.add(poolSettings)
     session.flush()
 
     # Create the pool
     pool = Pool(
-        device_id = specs['device_id'],
         pool_name = specs['pool_name'],
         settings_id = poolSettings.id,
         admin_id = specs['admin_id'],
@@ -114,13 +94,6 @@ def join(session, data):
     rows = session.execute(query).fetchone()
     if not rows:
         raise PoolSettingsNotFoundException
-    
-    settings = rows[0]
-    password = data['password'] if settings.has_password else ''
-
-    # Verify the provided password
-    if not bcrypt.checkpw(password.encode('utf-8'), settings.hash.encode('utf-8')):
-        raise InvalidPasswordException
 
     # Add the user as a member
     add_pool_member(data['profile_id'], data['pool_id'], session)
@@ -148,12 +121,10 @@ def create_buy_in(session, data):
 
     # Creates the transaction
     transaction = Transaction(
-        transaction_id = None,
         pool_id = pool.id,
         profile_id = data['profile_id'],
         type = TransactionTypes.BUY_IN,
         amount = data['amount'],
-        status = TransactionStatus.PENDING
     )
     session.add(transaction)
     session.flush()
@@ -182,7 +153,6 @@ def create_cash_out(session, data):
         profile_id = data['profile_id'],
         type = TransactionTypes.CASH_OUT,
         amount = transaction_amount,
-        status = TransactionStatus.PENDING
     )
     session.add(transaction)
     session.flush()
@@ -206,7 +176,6 @@ def get_pool_data(id, session):
     date_pool_created = pool.date_created
     pool_id = pool.id
     available_pot = pool.available_pot
-    device_id = pool.device_id
     pool_admin = get_user_first_last(pool.admin_id, session)
     pool_contributors_dict = {}
     pool_contributors = []
@@ -249,7 +218,6 @@ def get_pool_data(id, session):
         'name': pool_name,
         'date_created': date_pool_created,
         'id': pool_id,
-        'device_id': device_id,
         'available_pot': available_pot,
         'member_ids': members,
         'contributors': pool_contributors,
@@ -271,9 +239,7 @@ def get_settings_data(id, session):
         "min_buy_in": settings.min_buy_in,
         "max_buy_in": settings.max_buy_in,
         "denominations": [float(x) for x in settings.denominations.split(',')],
-        "has_password": settings.has_password,
         'buy_in_enabled': settings.buy_in_enabled,
-        'buy_in_expiry_time': settings.buy_in_expiry_time,
         'expired': settings.expired
     }
 

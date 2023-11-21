@@ -1,5 +1,6 @@
 import enum
 from dataclasses import dataclass
+import uuid
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import Integer, Text, String, DateTime, Float, Boolean, Enum
@@ -10,12 +11,7 @@ Base = declarative_base()
 class TransactionTypes(str, enum.Enum):
     BUY_IN = "BUY_IN"
     CASH_OUT = "CASH_OUT"
-
-class TransactionStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    PROCESSING = "PROCESSING"
-    SUCCEEDED = "SUCCEEDED"
-    FAILED = "FAILED"
+    BET = "BET"
 
 @dataclass
 class Profile(Base):
@@ -29,22 +25,11 @@ class Profile(Base):
     hash = Column(Text, nullable=False)
 
 @dataclass
-class Device(Base):
-
-    __tablename__ = "device"
-
-    id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
-
-    def __repr__(self):
-        return f"<Device {self.id}>"
-
-@dataclass
 class Pool(Base):
 
     __tablename__ = "pool"
 
-    id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
-    device_id = Column(Integer, ForeignKey("device.id"), nullable=True)
+    id = Column(String(36), primary_key=True, default=str(uuid.uuid4()))
     pool_name = Column(String(255), nullable=False)
     date_created = Column(DateTime, nullable=False, server_default=func.now())
     last_modified = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
@@ -66,10 +51,7 @@ class PoolSettings(Base):
     max_buy_in = Column(Float, nullable=False)
     denominations = Column(String(255), nullable=False)
     buy_in_enabled = Column(Boolean, nullable=False, default=True)
-    buy_in_expiry_time = Column(DateTime, nullable=True)
     expired = Column(Boolean, nullable=False, default=False)
-    has_password = Column(Boolean, nullable=False)
-    hash = Column(Text, nullable=False)
 
     def __repr__(self):
         return f"<Pool Setting {self.id}>"
@@ -79,7 +61,7 @@ class PoolMember(Base):
 
     __tablename__ = "poolmember"
 
-    pool_id = Column(Integer, ForeignKey("pool.id"), primary_key=True, nullable=False)
+    pool_id = Column(String(36), ForeignKey("pool.id"), primary_key=True, nullable=False)
     profile_id = Column(Integer, ForeignKey("profile.id"), primary_key=True, nullable=False)
 
     def __repr__(self):
@@ -91,13 +73,11 @@ class Transaction(Base):
     __tablename__ = "transaction"
 
     id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
-    transaction_id = Column(Text, nullable=True)
-    pool_id = Column(Integer, ForeignKey("pool.id"), nullable=False)
+    pool_id = Column(String(36), ForeignKey("pool.id"), nullable=False)
     profile_id = Column(Integer, ForeignKey("profile.id"), nullable=False)
     date = Column(DateTime, nullable=False, server_default=func.now())
     type = Column(Enum(TransactionTypes), nullable=False)
     amount = Column(Float, nullable=False)
-    status = Column(Enum(TransactionStatus), nullable=False)
 
     def __repr__(self):
         return f"<Transaction {self.id}>"
