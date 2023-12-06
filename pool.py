@@ -148,7 +148,6 @@ def create_cash_out(session, data):
 
     # Creates the transaction
     transaction = Transaction(
-        transaction_id = None,
         pool_id = pool.id,
         profile_id = data['profile_id'],
         type = TransactionTypes.CASH_OUT,
