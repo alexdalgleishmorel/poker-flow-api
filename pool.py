@@ -144,7 +144,11 @@ def create_cash_out(session, data):
     pool = rows[0]
 
     # Adjusts transaction amount based on the available pot
-    transaction_amount = pool.available_pot if data['amount'] > pool.available_pot else data['amount']
+    transaction_amount = data['amount']
+
+    if data['amount'] >= pool.available_pot:
+        transaction_amount = pool.available_pot
+        get_pool_settings(pool.settings_id, session).expired = True
 
     # Creates the transaction
     transaction = Transaction(
@@ -224,6 +228,14 @@ def get_pool_data(id, session):
         'admin': pool_admin,
         'settings': pool_settings,
     }
+
+def get_pool_settings(id, session):
+    query = select(PoolSettings).filter_by(id=id)
+    rows = session.execute(query).fetchone()
+    if not rows:
+        raise PoolSettingsNotFoundException
+    
+    return rows[0]
 
 def get_settings_data(id, session):
     query = select(PoolSettings).filter_by(id=id)

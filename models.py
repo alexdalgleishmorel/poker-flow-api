@@ -6,6 +6,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import Integer, Text, String, DateTime, Float, Boolean, Enum
 from sqlalchemy.sql import func
 
+def generate_uuid():
+    return str(uuid.uuid4())
+
 Base = declarative_base()
 
 class TransactionTypes(str, enum.Enum):
@@ -29,7 +32,7 @@ class Pool(Base):
 
     __tablename__ = "pool"
 
-    id = Column(String(36), primary_key=True, default=str(uuid.uuid4()))
+    id = Column(String(36), primary_key=True, default=generate_uuid)
     pool_name = Column(String(255), nullable=False)
     date_created = Column(DateTime, nullable=False, server_default=func.now())
     last_modified = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())

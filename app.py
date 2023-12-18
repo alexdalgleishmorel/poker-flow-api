@@ -96,8 +96,10 @@ def join_pool(session):
       pool.join(session, data)
       return "", 201
     
+    except PoolNotFoundException:
+        return "Pool Not Found: The given pool ID could not be found", 401
     except InvalidPoolPasswordException:
-      return "Invalid Credentials: The supplied pool password is incorrect", 401
+        return "Invalid Credentials: The supplied pool password is incorrect", 401
         
 
 @app.route('/pool/transaction/create', methods=['POST'])
