@@ -99,7 +99,6 @@ def join_pool(session):
     data = request.get_json()
     try:
       pool.join(session, data)
-      socketio.emit('pool_updated', {'data': {}})
       return "", 201
     
     except PoolNotFoundException:
