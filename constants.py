@@ -3,11 +3,14 @@ from botocore.exceptions import ClientError
 import json
 import os
 
-
 DATABASE = 'pokerflowDB'
 DRIVER = 'ODBC+Driver+18+for+SQL+Server'
-TRUST = 'TrustServerCertificate=yes'
 ENV = os.getenv('env')
+API_HOST = '127.0.01'
+API_PORT = 8000
+CLIENT_HOST = 'localhost'
+CLIENT_PORT = 8100
+TRUST = 'TrustServerCertificate=yes'
 
 if not ENV:
   raise Exception('Missing environment variable: env')

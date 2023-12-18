@@ -1,9 +1,11 @@
 import flask
 from flask import request, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO
 from sqlalchemy.exc import SQLAlchemyError
 
 import auth
+from constants import API_HOST, API_PORT, CLIENT_HOST, CLIENT_PORT
 import database
 import pool
 from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolPasswordException, InvalidTransactionException
@@ -11,6 +13,7 @@ import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException as InvalidUserPasswordException
 
 app = flask.Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins=f"http://{CLIENT_HOST}:{CLIENT_PORT}")
 cors = CORS(app)
 
 def with_session(func):
@@ -73,6 +76,7 @@ def create_pool(session):
     """
     data = request.get_json()
     created_pool = pool.create(session, data)
+    socketio.emit('pool_updated', {'data': {}})
     return created_pool, 201
 
 @app.route('/pool/settings/update', methods=['POST'])
@@ -83,6 +87,7 @@ def update_pool_settings(session):
     """
     data = request.get_json()
     updated_pool = pool.update_settings(session, data)
+    socketio.emit('pool_updated', {'data': {}})
     return updated_pool, 200
 
 @app.route('/pool/join', methods=['POST'])
@@ -94,6 +99,7 @@ def join_pool(session):
     data = request.get_json()
     try:
       pool.join(session, data)
+      socketio.emit('pool_updated', {'data': {}})
       return "", 201
     
     except PoolNotFoundException:
@@ -111,10 +117,8 @@ def create_transaction(session):
     data = request.get_json()
     try:
         amount, type = pool.create_transaction(session, data)
-        return {
-            'amount': amount,
-            'type': type
-        }, 201
+        socketio.emit('pool_updated', {'data': {}})
+        return { 'amount': amount, 'type': type }, 201
     except InvalidTransactionException:
         return "Invalid Transaction Error: The provided transaction was invalid", 400
 
@@ -153,4 +157,4 @@ def signup(session):
       return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
     
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8000)
+    socketio.run(app, host=API_HOST, port=API_PORT)
