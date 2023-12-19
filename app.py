@@ -155,5 +155,27 @@ def signup(session):
     except EmailAlreadyExistsException:
       return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
     
+@app.route('/verifyUniqueEmail', methods=['POST'])
+@with_session
+def verifyUniqueEmail(session):
+    data = request.get_json()
+    try:
+      user.verifyUniqueEmail(session, data)
+      return "true", 200
+
+    except EmailAlreadyExistsException:
+      return "false", 200
+    
+@app.route('/updateUser', methods=['POST'])
+@with_session
+def updateUser(session):
+    data = request.get_json()
+    try:
+      user.updateUser(session, data)
+      return "", 201
+
+    except EmailAlreadyExistsException:
+      return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
+    
 if __name__ == '__main__':
     socketio.run(app, host=API_HOST, port=API_PORT)

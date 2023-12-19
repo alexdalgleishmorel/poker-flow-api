@@ -15,6 +15,29 @@ class InvalidPasswordException(Exception):
 class UserNotFoundException(Exception):
     pass
 
+def updateUser(session, data):
+    query = select(Profile).filter_by(id=data['id'])
+    rows = session.execute(query).fetchone()
+    if not rows:
+        raise UserNotFoundException
+    
+    profile = rows[0]
+
+    profile.firstName = data['firstName']
+    profile.lastName = data['lastName']
+    profile.email = data['email']
+    
+    session.commit()
+
+def verifyUniqueEmail(session, data):
+    # Verify if the email already exists within the database
+    query = select(Profile).filter_by(email=data['email'])
+    rows = session.execute(query).all()
+    if rows:
+        raise EmailAlreadyExistsException
+    else:
+        return True
+
 def create(session, data):
     # Verify if the email already exists within the database
     query = select(Profile).filter_by(email=data['email'])
