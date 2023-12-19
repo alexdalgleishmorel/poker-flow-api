@@ -29,6 +29,14 @@ def updateUser(session, data):
     
     session.commit()
 
+    # Return the profile information
+    return {
+        'id': profile.id,
+        'email': profile.email,
+        'firstName': profile.firstName,
+        'lastName': profile.lastName
+    }
+
 def verifyUniqueEmail(session, data):
     # Verify if the email already exists within the database
     query = select(Profile).filter_by(email=data['email'])

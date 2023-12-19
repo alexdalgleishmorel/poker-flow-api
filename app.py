@@ -128,9 +128,7 @@ def login(session):
     data = request.get_json()
     try:
       profile_data = user.login(session, data)
-      return {
-      "jwt": auth.generate_jwt(profile_data)
-    }
+      return { "jwt": auth.generate_jwt(profile_data) }
 
     except EmailNotFoundException:
         return "EmailNotFound: No profile with the given email could be found", 404
@@ -171,8 +169,8 @@ def verifyUniqueEmail(session):
 def updateUser(session):
     data = request.get_json()
     try:
-      user.updateUser(session, data)
-      return "", 201
+      profile_data = user.updateUser(session, data)
+      return { "jwt": auth.generate_jwt(profile_data) }
 
     except EmailAlreadyExistsException:
       return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
