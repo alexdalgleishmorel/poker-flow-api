@@ -37,23 +37,41 @@ def health_check():
     """
     return '', 200
 
-@app.route('/pool/user/<string:id>', methods=['GET'])
+@app.route('/pool/active/user/<string:id>', methods=['GET'])
 @with_session
-def get_pools_by_user_id(session, id):
+def get_active_pools_by_user_id(session, id):
     """
-    Queries for pools associated with the given user ID
+    Queries for active pools associated with the given user ID
     """
     try:
         pools = pool.get_by_user_id(
             session, 
             id, 
             itemOffset=request.args.get('itemOffset', type=int), 
-            per_page=request.args.get('itemsPerPage', type=int)
+            per_page=request.args.get('itemsPerPage', type=int),
+            expired=False
         )
         return jsonify(pools)
     except PoolNotFoundException:
         return "PoolNotFound: No pools found relating to the specified user ID", 404
-
+    
+@app.route('/pool/expired/user/<string:id>', methods=['GET'])
+@with_session
+def get_expired_pools_by_user_id(session, id):
+    """
+    Queries for expired pools associated with the given user ID
+    """
+    try:
+        pools = pool.get_by_user_id(
+            session, 
+            id, 
+            itemOffset=request.args.get('itemOffset', type=int), 
+            per_page=request.args.get('itemsPerPage', type=int),
+            expired=True
+        )
+        return jsonify(pools)
+    except PoolNotFoundException:
+        return "PoolNotFound: No pools found relating to the specified user ID", 404
 
 @app.route('/pool/<string:id>', methods=['GET'])
 @with_session

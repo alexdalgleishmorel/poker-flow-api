@@ -16,7 +16,7 @@ class InvalidPasswordException(Exception):
 class InvalidTransactionException(Exception):
     pass
 
-def get_by_user_id(session, id, itemOffset, per_page):
+def get_by_user_id(session, id, itemOffset, per_page, expired):
     """
     Queries for pools associated with the given user ID
     """
@@ -25,7 +25,9 @@ def get_by_user_id(session, id, itemOffset, per_page):
     query = (
         select(PoolMember)
             .join(Pool, Pool.id == PoolMember.pool_id)
+            .join(PoolSettings, Pool.settings_id == PoolSettings.id)
             .filter(PoolMember.profile_id == id)
+            .filter(PoolSettings.expired == expired)
             .order_by(desc(Pool.last_modified))
             .limit(per_page)
             .offset(itemOffset)
