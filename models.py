@@ -28,26 +28,26 @@ class Profile(Base):
     hash = Column(Text, nullable=False)
 
 @dataclass
-class Pool(Base):
+class Game(Base):
 
-    __tablename__ = "pool"
+    __tablename__ = "game"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    pool_name = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
     date_created = Column(DateTime, nullable=False, server_default=func.now())
     last_modified = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-    settings_id = Column(Integer, ForeignKey("poolsettings.id"), nullable=False)
+    settings_id = Column(Integer, ForeignKey("gamesettings.id"), nullable=False)
     admin_id = Column(Integer, ForeignKey("profile.id"), nullable=False)
     total_pot = Column(Float, nullable=False, default=0)
-    available_pot = Column(Float, nullable=False, default=0)
+    available_cashout = Column(Float, nullable=False, default=0)
 
     def __repr__(self):
-        return f"<Pool {self.id}>"
+        return f"<Game {self.id}>"
 
 @dataclass
-class PoolSettings(Base):
+class GameSettings(Base):
 
-    __tablename__ = "poolsettings"
+    __tablename__ = "gamesettings"
 
     id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
     min_buy_in = Column(Float, nullable=False)
@@ -57,18 +57,18 @@ class PoolSettings(Base):
     expired = Column(Boolean, nullable=False, default=False)
 
     def __repr__(self):
-        return f"<Pool Setting {self.id}>"
+        return f"<Game Setting {self.id}>"
 
 @dataclass
-class PoolMember(Base):
+class GameMember(Base):
 
-    __tablename__ = "poolmember"
+    __tablename__ = "gamemember"
 
-    pool_id = Column(String(36), ForeignKey("pool.id"), primary_key=True, nullable=False)
+    game_id = Column(String(36), ForeignKey("game.id"), primary_key=True, nullable=False)
     profile_id = Column(Integer, ForeignKey("profile.id"), primary_key=True, nullable=False)
 
     def __repr__(self):
-        return f"<Pool {self.id}>"
+        return f"<Game {self.id}>"
 
 @dataclass
 class Transaction(Base):
@@ -76,7 +76,7 @@ class Transaction(Base):
     __tablename__ = "transaction"
 
     id = Column(Integer, primary_key=True, autoincrement='auto', nullable=False)
-    pool_id = Column(String(36), ForeignKey("pool.id"), nullable=False)
+    game_id = Column(String(36), ForeignKey("game.id"), nullable=False)
     profile_id = Column(Integer, ForeignKey("profile.id"), nullable=False)
     date = Column(DateTime, nullable=False, server_default=func.now())
     type = Column(Enum(TransactionTypes), nullable=False)

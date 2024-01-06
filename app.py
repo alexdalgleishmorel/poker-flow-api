@@ -7,8 +7,8 @@ from sqlalchemy.exc import SQLAlchemyError
 import auth
 from constants import API_HOST, API_PORT, CLIENT_HOST, CLIENT_PORT
 import database
-import pool
-from pool import PoolNotFoundException, InvalidPasswordException as InvalidPoolPasswordException, InvalidTransactionException
+import game
+from game import GameNotFoundException, InvalidPasswordException as InvalidGamePasswordException, InvalidTransactionException
 import user
 from user import EmailAlreadyExistsException, EmailNotFoundException, InvalidPasswordException as InvalidUserPasswordException
 
@@ -37,95 +37,95 @@ def health_check():
     """
     return '', 200
 
-@app.route('/pool/active/user/<string:id>', methods=['GET'])
+@app.route('/game/active/user/<string:id>', methods=['GET'])
 @with_session
-def get_active_pools_by_user_id(session, id):
+def get_active_games_by_user_id(session, id):
     """
-    Queries for active pools associated with the given user ID
+    Queries for active games associated with the given user ID
     """
     try:
-        pools = pool.get_by_user_id(
+        games = game.get_by_user_id(
             session, 
             id, 
             itemOffset=request.args.get('itemOffset', type=int), 
             per_page=request.args.get('itemsPerPage', type=int),
             expired=False
         )
-        return jsonify(pools)
-    except PoolNotFoundException:
-        return "PoolNotFound: No pools found relating to the specified user ID", 404
+        return jsonify(games)
+    except GameNotFoundException:
+        return "GameNotFound: No games found relating to the specified user ID", 404
     
-@app.route('/pool/expired/user/<string:id>', methods=['GET'])
+@app.route('/game/expired/user/<string:id>', methods=['GET'])
 @with_session
-def get_expired_pools_by_user_id(session, id):
+def get_expired_games_by_user_id(session, id):
     """
-    Queries for expired pools associated with the given user ID
+    Queries for expired games associated with the given user ID
     """
     try:
-        pools = pool.get_by_user_id(
+        games = game.get_by_user_id(
             session, 
             id, 
             itemOffset=request.args.get('itemOffset', type=int), 
             per_page=request.args.get('itemsPerPage', type=int),
             expired=True
         )
-        return jsonify(pools)
-    except PoolNotFoundException:
-        return "PoolNotFound: No pools found relating to the specified user ID", 404
+        return jsonify(games)
+    except GameNotFoundException:
+        return "GameNotFound: No games found relating to the specified user ID", 404
 
-@app.route('/pool/<string:id>', methods=['GET'])
+@app.route('/game/<string:id>', methods=['GET'])
 @with_session
-def get_pool_by_id(session, id):
+def get_game_by_id(session, id):
     """
-    Queries for a pool with the given pool ID
+    Queries for a game with the given game ID
     """
     try:
-      pool_data = pool.get_by_id(session, id)
-      return jsonify(pool_data)
-    except PoolNotFoundException:
-      return "PoolNotFound: No pool found with the specified ID", 404
+      game_data = game.get_by_id(session, id)
+      return jsonify(game_data)
+    except GameNotFoundException:
+      return "GameNotFound: No game found with the specified ID", 404
 
 
-@app.route('/pool/create', methods=['POST'])
+@app.route('/game/create', methods=['POST'])
 @with_session
-def create_pool(session):
+def create_game(session):
     """
-    Creates a new pool, based on the specifications supplied in the request body
+    Creates a new game, based on the specifications supplied in the request body
     """
     data = request.get_json()
-    created_pool = pool.create(session, data)
-    socketio.emit('pool_updated', {'data': {}})
-    return created_pool, 201
+    created_game = game.create(session, data)
+    socketio.emit('game_updated', {'data': {}})
+    return created_game, 201
 
-@app.route('/pool/settings/update', methods=['POST'])
+@app.route('/game/settings/update', methods=['POST'])
 @with_session
-def update_pool_settings(session):
+def update_game_settings(session):
     """
-    Update a pool attribute
+    Update game attributes
     """
     data = request.get_json()
-    updated_pool = pool.update_settings(session, data)
-    socketio.emit('pool_updated', {'data': {}})
-    return updated_pool, 200
+    updated_game = game.update_settings(session, data)
+    socketio.emit('game_updated', {'data': {}})
+    return updated_game, 200
 
-@app.route('/pool/join', methods=['POST'])
+@app.route('/game/join', methods=['POST'])
 @with_session
-def join_pool(session):
+def join_game(session):
     """
-    Adds the specified user as a member of the given pool
+    Adds the specified user as a member of the given game
     """
     data = request.get_json()
     try:
-      pool.join(session, data)
+      game.join(session, data)
       return "", 201
     
-    except PoolNotFoundException:
-        return "Pool Not Found: The given pool ID could not be found", 401
-    except InvalidPoolPasswordException:
-        return "Invalid Credentials: The supplied pool password is incorrect", 401
+    except GameNotFoundException:
+        return "Game Not Found: The given game ID could not be found", 401
+    except InvalidGamePasswordException:
+        return "Invalid Credentials: The supplied game password is incorrect", 401
         
 
-@app.route('/pool/transaction/create', methods=['POST'])
+@app.route('/game/transaction/create', methods=['POST'])
 @with_session
 def create_transaction(session):
     """
@@ -133,8 +133,8 @@ def create_transaction(session):
     """
     data = request.get_json()
     try:
-        amount, type = pool.create_transaction(session, data)
-        socketio.emit('pool_updated', {'data': {}})
+        amount, type = game.create_transaction(session, data)
+        socketio.emit('game_updated', {'data': {}})
         return { 'amount': amount, 'type': type }, 201
     except InvalidTransactionException:
         return "Invalid Transaction Error: The provided transaction was invalid", 400
@@ -152,13 +152,6 @@ def login(session):
         return "EmailNotFound: No profile with the given email could be found", 404
     except InvalidUserPasswordException:
         return "Invalid Credentials: The supplied username and password are invalid", 401
-    
-    
-@app.route('/logout', methods=['GET'])
-@with_session
-def logout(session):
-    return "", 200
-    
 
 @app.route('/signup', methods=['POST'])
 @with_session
