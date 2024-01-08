@@ -6,10 +6,6 @@ import os
 DATABASE = 'pokerflowDB'
 DRIVER = 'ODBC+Driver+18+for+SQL+Server'
 ENV = os.getenv('env')
-API_HOST = '127.0.0.1'
-API_PORT = 8000
-CLIENT_HOST = 'localhost'
-CLIENT_PORT = 8100
 TRUST = 'TrustServerCertificate=yes'
 
 if not ENV:
@@ -40,12 +36,20 @@ if ENV == 'prod':
   PASSWORD = secret['password']
   HOST = secret['host']
   PORT = secret['port']
+  API_HOST = secret['api_host']
+  API_PORT = secret['api_port']
+  CLIENT_HOST = secret['client_host']
+  CLIENT_PORT = secret['client_port']
 
 elif ENV == 'local':
   USER = os.getenv('db_username')
   PASSWORD = os.getenv('db_password')
   HOST = os.getenv('db_host')
   PORT = os.getenv('db_port')
+  API_HOST = os.getenv('api_host')
+  API_PORT = os.getenv('api_port')
+  CLIENT_HOST = os.getenv('client_host')
+  CLIENT_PORT = os.getenv('client_port')
 
 else:
    raise Exception(f'Unrecognized env: {ENV}')
@@ -54,3 +58,7 @@ if not USER: raise Exception('Missing required environment variable: db_username
 if not PASSWORD: raise Exception('Missing required environment variable: db_password')
 if not HOST: raise Exception('Missing required environment variable: db_host')
 if not PORT: raise Exception('Missing required environment variable: db_port')
+if not API_HOST: raise Exception('Missing required environment variable: api_host')
+if not API_PORT: raise Exception('Missing required environment variable: api_client')
+if not CLIENT_HOST: raise Exception('Missing required environment variable: client_host')
+if not CLIENT_PORT: raise Exception('Missing required environment variable: client_port')
