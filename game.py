@@ -204,7 +204,7 @@ def get_game_data(id, session):
 
         game_transactions.append({
             "profile": get_user_first_last(transaction.profile_id, session),
-            "date": transaction.date.strftime('%Y-%m-%d %H:%M:%S'),
+            "date": transaction.date.strftime('%Y-%m-%d %H:%M:%S') + ' UTC',
             "type": transaction.type,
             "amount": transaction.amount,
             "denominations": [int(x) for x in transaction.denominations.split(',')],
@@ -225,7 +225,7 @@ def get_game_data(id, session):
 
     return {
         'name': name,
-        'dateCreated': date_game_created.strftime('%Y-%m-%d %H:%M:%S'),
+        'dateCreated': date_game_created.strftime('%Y-%m-%d %H:%M:%S') + ' UTC',
         'id': game_id,
         'availableCashout': available_cashout,
         'memberIDs': members,
