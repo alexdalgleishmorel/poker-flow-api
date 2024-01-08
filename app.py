@@ -119,7 +119,7 @@ def join_game(session):
       return "", 201
     
     except GameNotFoundException:
-        return "Game Not Found: The given game ID could not be found", 401
+        return "Game Not Found: The given game ID could not be found", 404
     except InvalidGamePasswordException:
         return "Invalid Credentials: The supplied game password is incorrect", 401
         
