@@ -1,4 +1,3 @@
-import bcrypt
 from sqlalchemy import select, desc
 
 from models import Game, GameMember, GameSettings, Transaction, TransactionTypes
@@ -18,7 +17,21 @@ class InvalidTransactionException(Exception):
 
 def get_by_user_id(session, id, itemOffset, per_page, expired):
     """
-    Queries for games associated with the given user ID
+    Find games where the given user is a member. 
+    Supports pagination and filters based on whether the game is expired or not.
+
+    Parameters:
+    session (Session): The database session to use for queries.
+    id (int): The user ID to search for in the game members.
+    itemOffset (int): The offset from where to start the query results, used for pagination.
+    per_page (int): The number of items to return per page.
+    expired (bool): A flag to filter games based on whether they are expired.
+
+    Returns:
+    list: A list of games associated with the given user ID.
+
+    Raises:
+    GameNotFoundException: If no games are found for the given user ID.
     """
     games = []
 
@@ -43,7 +56,17 @@ def get_by_user_id(session, id, itemOffset, per_page, expired):
 
 def get_by_id(session, id):
     """
-    Queries for a game with the given game ID
+    Queries for a specific game using based on the provided ID.
+
+    Parameters:
+    session (Session): The database session to use for the query.
+    id (int): The unique identifier of the game to be retrieved.
+
+    Returns:
+    dict: A dictionary containing the game's data, if found.
+
+    Raises:
+    GameNotFoundException: If no game is found with the provided ID.
     """
     query = select(Game).filter_by(id=id)
     rows = session.execute(query).fetchone()
@@ -54,7 +77,14 @@ def get_by_id(session, id):
 
 def create(session, specs):
     """
-    Creates a new game, based on the given specifications
+    Handles the creation of a new game, registering the game and its settings to the database.
+
+    Parameters:
+    session (Session): The database session to be used for creating the game.
+    specs (dict): A dictionary containing the specifications for the new game.
+
+    Returns:
+    dict: The data of the newly created game.
     """
     # Create the game settings
     gameSettings = GameSettings(
@@ -89,7 +119,16 @@ def create(session, specs):
 
 def join(session, data):
     """
-    Adds a new member to a game
+    Registers a user as a member of a specified game.
+    Checks for the existence of the game and its settings before adding the member.
+
+    Parameters:
+    session (Session): The database session to use for the operation.
+    data (dict): A dictionary containing the game ID and the profile ID of the new member.
+
+    Raises:
+    GameNotFoundException: If no game is found with the provided game ID.
+    GameSettingsNotFoundException: If the settings for the specified game are not found.
     """
     game = get_by_id(session, data['gameID'])
     
@@ -105,7 +144,15 @@ def join(session, data):
 
 def create_transaction(session, data):
     """
-    Creates a new transaction record
+    Processes games transactions. 
+    Supports buy-in and cash-out transactions and ensures valid transaction processing.
+
+    Parameters:
+    session (Session): The database session to use for creating the transaction.
+    data (dict): A dictionary containing transaction details including type, amount, game ID, and profile ID.
+
+    Raises:
+    InvalidTransactionException: If the transaction type is not recognized.
     """
     if data['type'] == TransactionTypes.BUY_IN:
         return create_buy_in(session, data)
@@ -115,6 +162,20 @@ def create_transaction(session, data):
         raise InvalidTransactionException
 
 def create_buy_in(session, data):
+    """
+    Processing a buy-in transaction, where a player adds money to the game's pot. 
+    Updates the game's total pot and available cashout amounts accordingly.
+
+    Parameters:
+    session (Session): The database session to use for the transaction.
+    data (dict): A dictionary containing details of the buy-in transaction, including the game ID, profile ID, amount, and denominations.
+
+    Returns:
+    tuple: A tuple containing the transaction amount and type.
+
+    Raises:
+    GameNotFoundException: If no game is found for the given game ID.
+    """
     # Gets the associated game
     query = select(Game).filter_by(id=data['gameID'])
     rows = session.execute(query).fetchone()
@@ -140,6 +201,20 @@ def create_buy_in(session, data):
     return transaction.amount, transaction.type
 
 def create_cash_out(session, data):
+    """
+    Handles cash-out transactions where a player withdraws money from the game's total pot.
+    It adjusts the transaction amount based on the available cashout and updates the game's available cashout accordingly.
+
+    Parameters:
+    session (Session): The database session for processing the transaction.
+    data (dict): Details of the cash-out transaction, including game ID, profile ID, and requested amount.
+
+    Returns:
+    tuple: A tuple containing the processed transaction amount and type.
+
+    Raises:
+    GameNotFoundException: If the specified game is not found.
+    """
     # Gets the associated game
     query = select(Game).filter_by(id=data['gameID'])
     rows = session.execute(query).fetchone()
@@ -172,7 +247,17 @@ def create_cash_out(session, data):
 
 def get_game_data(id, session):
     """
-    Gets all data pertaining to a specific game
+    Creates an object containing all required details of a specific game.
+
+    Parameters:
+    id (int): The ID of the game to retrieve.
+    session (Session): The database session to use for queries.
+
+    Returns:
+    dict: A dictionary containing detailed information about the game.
+
+    Raises:
+    GameNotFoundException: If no game is found with the provided ID.
     """
     query = select(Game).filter_by(id=id)
     rows = session.execute(query).all()
@@ -236,6 +321,19 @@ def get_game_data(id, session):
     }
 
 def get_game_settings(id, session):
+    """
+    Retrieves the settings associated with a specific game.
+
+    Parameters:
+    id (int): The ID of the game whose settings are to be retrieved.
+    session (Session): The database session to use for the query.
+
+    Returns:
+    GameSettings: The game settings object.
+
+    Raises:
+    GameSettingsNotFoundException: If no settings are found for the given game ID.
+    """
     query = select(GameSettings).filter_by(id=id)
     rows = session.execute(query).fetchone()
     if not rows:
@@ -244,6 +342,19 @@ def get_game_settings(id, session):
     return rows[0]
 
 def get_settings_data(id, session):
+    """
+    Creates an object containing all required details of a specific game's settings.
+
+    Parameters:
+    id (int): The ID of the game settings for which settings data is required.
+    session (Session): The database session for the query.
+
+    Returns:
+    dict: A dictionary containing the settings data of the game.
+
+    Raises:
+    GameSettingsNotFoundException: If settings for the specified game settings ID are not found.
+    """
     query = select(GameSettings).filter_by(id=id)
     rows = session.execute(query).fetchone()
     if not rows:
@@ -262,6 +373,14 @@ def get_settings_data(id, session):
     }
 
 def add_game_member(id, game_id, session):
+    """
+    Registers a user as a member of a game, if the user is not already a member.
+
+    Parameters:
+    id (int): The profile ID of the user to be added as a member.
+    game_id (int): The ID of the game to which the member is to be added.
+    session (Session): The database session for the operation.
+    """
     query = select(GameMember).filter_by(profile_id=id, game_id=game_id)
     rows = session.execute(query).all()
     if rows:
@@ -273,6 +392,21 @@ def add_game_member(id, game_id, session):
     session.add(game_member)
 
 def update_settings(session, data):
+    """
+    Modifies the game settings of a game based on provided update requests.
+    Handles multiple updates in a single transaction.
+
+    Parameters:
+    session (Session): The database session to use for updating settings.
+    data (dict): A dictionary containing the game ID and a list of update requests, each specifying the attribute to update and its new value.
+
+    Returns:
+    dict: The updated game data after the settings have been modified.
+
+    Raises:
+    GameNotFoundException: If no game is found for the provided game ID.
+    GameSettingsNotFoundException: If settings for the specified game are not found.
+    """
     for updateRequest in data['update_requests']:
         # Gets the associated game
         query = select(Game).filter_by(id=data['gameID'])
