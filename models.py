@@ -70,6 +70,7 @@ class GameSettings(Base):
     _min_buy_in = Column(Float, nullable=False)
     _max_buy_in = Column(Float, nullable=False)
     denominations = Column(String(255), nullable=False)
+    denomination_colors = Column(String(255), nullable=False)
     buy_in_enabled = Column(Boolean, nullable=False, default=True)
     expired = Column(Boolean, nullable=False, default=False)
 
@@ -114,6 +115,7 @@ class Transaction(Base):
     date = Column(DateTime, nullable=False, server_default=func.now())
     type = Column(Enum(TransactionTypes), nullable=False)
     _amount = Column(Float, nullable=False)
+    denominations = Column(String(255), nullable=False)
 
     @hybrid_property
     def amount(self):

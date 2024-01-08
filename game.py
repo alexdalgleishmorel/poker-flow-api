@@ -61,6 +61,7 @@ def create(session, specs):
         min_buy_in = specs['settings']['minBuyIn'],
         max_buy_in = specs['settings']['maxBuyIn'],
         denominations = ','.join(str(x) for x in specs['settings']['denominations']),
+        denomination_colors = ','.join(str(x) for x in specs['settings']['denominationColors']),
     )
     session.add(gameSettings)
     session.flush()
@@ -127,6 +128,7 @@ def create_buy_in(session, data):
         profile_id = data['profileID'],
         type = TransactionTypes.BUY_IN,
         amount = data['amount'],
+        denominations = ','.join(str(x) for x in data['denominations']),
     )
     session.add(transaction)
     session.flush()
@@ -158,6 +160,7 @@ def create_cash_out(session, data):
         profile_id = data['profileID'],
         type = TransactionTypes.CASH_OUT,
         amount = transaction_amount,
+        denominations = ','.join(str(x) for x in data['denominations']),
     )
     session.add(transaction)
     session.flush()
@@ -201,9 +204,10 @@ def get_game_data(id, session):
 
         game_transactions.append({
             "profile": get_user_first_last(transaction.profile_id, session),
-            "date": transaction.date,
+            "date": transaction.date.strftime('%Y-%m-%d %H:%M:%S'),
             "type": transaction.type,
-            "amount": transaction.amount
+            "amount": transaction.amount,
+            "denominations": [int(x) for x in transaction.denominations.split(',')],
         })
 
     for contributor in game_contributors_dict:
@@ -221,7 +225,7 @@ def get_game_data(id, session):
 
     return {
         'name': name,
-        'dateCreated': date_game_created,
+        'dateCreated': date_game_created.strftime('%Y-%m-%d %H:%M:%S'),
         'id': game_id,
         'availableCashout': available_cashout,
         'memberIDs': members,
@@ -252,6 +256,7 @@ def get_settings_data(id, session):
         "minBuyIn": settings.min_buy_in,
         "maxBuyIn": settings.max_buy_in,
         "denominations": [float(x) for x in settings.denominations.split(',')],
+        "denominationColors": [x for x in settings.denomination_colors.split(',')],
         'buyInEnabled': settings.buy_in_enabled,
         'expired': settings.expired
     }

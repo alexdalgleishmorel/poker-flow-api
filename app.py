@@ -1,7 +1,7 @@
 import flask
 from flask import request, jsonify
 from flask_cors import CORS
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, leave_room
 from sqlalchemy.exc import SQLAlchemyError
 
 import auth
@@ -94,7 +94,6 @@ def create_game(session):
     """
     data = request.get_json()
     created_game = game.create(session, data)
-    socketio.emit('game_updated', {'data': {}})
     return created_game, 201
 
 @app.route('/game/settings/update', methods=['POST'])
@@ -105,7 +104,7 @@ def update_game_settings(session):
     """
     data = request.get_json()
     updated_game = game.update_settings(session, data)
-    socketio.emit('game_updated', {'data': {}})
+    socketio.emit('game_updated', updated_game, room=updated_game['id'])
     return updated_game, 200
 
 @app.route('/game/join', methods=['POST'])
@@ -134,7 +133,8 @@ def create_transaction(session):
     data = request.get_json()
     try:
         amount, type = game.create_transaction(session, data)
-        socketio.emit('game_updated', {'data': {}})
+        updated_game = game.get_by_id(session, data['gameID'])
+        socketio.emit('game_updated', updated_game, room=updated_game['id'])
         return { 'amount': amount, 'type': type }, 201
     except InvalidTransactionException:
         return "Invalid Transaction Error: The provided transaction was invalid", 400
@@ -185,6 +185,18 @@ def updateUser(session):
 
     except EmailAlreadyExistsException:
       return "EmailAlreadyExists: A profile with the given email already exists within the database", 401
+    
+@socketio.on('subscribe_to_game')
+def on_subscribe_to_game(data):
+    game_id = data['game_id']
+    print(game_id)
+    join_room(game_id)
+
+@socketio.on('unsubscribe_from_game')
+def on_unsubscribe_from_game(data):
+    game_id = data['game_id']
+    print(game_id)
+    leave_room(game_id)
     
 if __name__ == '__main__':
     socketio.run(app, host=API_HOST, port=API_PORT)

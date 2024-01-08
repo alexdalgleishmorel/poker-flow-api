@@ -6,9 +6,9 @@ import os
 DATABASE = 'pokerflowDB'
 DRIVER = 'ODBC+Driver+18+for+SQL+Server'
 ENV = os.getenv('env')
-API_HOST = '10.0.0.141'
+API_HOST = '127.0.0.1'
 API_PORT = 8000
-CLIENT_HOST = '10.0.0.141'
+CLIENT_HOST = 'localhost'
 CLIENT_PORT = 8100
 TRUST = 'TrustServerCertificate=yes'
 
