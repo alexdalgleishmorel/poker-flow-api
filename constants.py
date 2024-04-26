@@ -59,6 +59,6 @@ if not PASSWORD: raise Exception('Missing required environment variable: db_pass
 if not HOST: raise Exception('Missing required environment variable: db_host')
 if not PORT: raise Exception('Missing required environment variable: db_port')
 if not API_HOST: raise Exception('Missing required environment variable: api_host')
-if not API_PORT: raise Exception('Missing required environment variable: api_client')
+if not API_PORT: raise Exception('Missing required environment variable: api_port')
 if not CLIENT_HOST: raise Exception('Missing required environment variable: client_host')
 if not CLIENT_PORT: raise Exception('Missing required environment variable: client_port')

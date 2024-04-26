@@ -327,7 +327,6 @@ def on_subscribe_to_game(data):
     data (dict): Data containing the 'game_id' key to specify which game room to join.
     """
     game_id = data['game_id']
-    print(game_id)
     join_room(game_id)
 
 @socketio.on('unsubscribe_from_game')
@@ -341,7 +340,6 @@ def on_unsubscribe_from_game(data):
     data (dict): Data containing the 'game_id' key to specify which game room to leave.
     """
     game_id = data['game_id']
-    print(game_id)
     leave_room(game_id)
     
 if __name__ == '__main__':
